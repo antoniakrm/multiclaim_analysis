@@ -1,14 +1,14 @@
 from collections import deque
 from dataclasses import dataclass
 from functools import cached_property
-from typing import Any, Dict, Generator, List, Type, Union, Tuple
+from typing import Any, Dict, Generator, List, Tuple, Type, Union
 
 from outlines.serve.vllm import JSONLogitsProcessor
 from pydantic import BaseModel
 from tqdm import tqdm
 from vllm import LLM, SamplingParams
 
-from .dataset import TsvTextDataset
+from .dataset import ClaimPostDataset
 from .utils import parse_json, parse_pydantic_schema, validate_json_with_schema
 
 
@@ -30,7 +30,7 @@ class Engine:
         llm: LLM,
         sampling_params: SamplingParams,
         schema: Type[BaseModel],
-        dataset: TsvTextDataset,
+        dataset: ClaimPostDataset,
     ):
         self.llm = llm
         self.sampling_params = sampling_params
@@ -46,8 +46,7 @@ class Engine:
         return parse_pydantic_schema(self.schema)
 
     def process_batch(self, batch: List[Dict[str, Any]]) -> List[JsonCompletion]:
-
-        json_completions = [JsonCompletion(**ex, output_json={}) for ex in batch]
+        json_completions = [JsonCompletion(input_json=ex, output_json={}) for ex in batch]
 
         queue = deque([(i, ex) for i, ex in enumerate(batch)])
 
